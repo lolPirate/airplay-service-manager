@@ -10,7 +10,7 @@ Environment=HOME=/home/deb
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=WAYLAND_DISPLAY=wayland-0
 Environment=ALSOFT_DRIVERS=alsa
-ExecStart=/home/deb/airplay-control/.venv/bin/gunicorn --workers 1 --threads 4 --bind 0.0.0.0:5000 run:app
+ExecStart=/home/deb/airplay-control/.airplay_env/bin/gunicorn --workers 1 --threads 4 --bind 0.0.0.0:5000 run:app
 Restart=on-failure
 RestartSec=2
 
