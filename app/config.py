@@ -25,6 +25,9 @@ BASE_ENV.update(
 
 # Normal mirroring profile: hardware H.264 decode + Wayland output.
 AV_ARGS = [
+    "-n", "RaspiAirPlayServer",
+    "-nh",
+    "-s", "1920x1080",
     "-v4l2",
     "-bt709",
     "-vs", "waylandsink",
@@ -35,7 +38,8 @@ AV_ARGS = [
 # asks UxPlay to render album art when the client is using AirPlay Audio.
 # `-async` gives best-quality AirPlay Audio at the cost of added latency.
 AUDIO_ARGS = [
+    "-n", "RaspiAirPlayServer",
+    "-nh",
     "-vs", "0",
-    "-ca",
-    "-async",
+    "-ca"
 ]
