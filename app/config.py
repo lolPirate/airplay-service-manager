@@ -52,5 +52,5 @@ AUDIO_ARGS = [
     "-n", UXPLAY_NAME,
     "-nh",
     "-vs", "0",
-    "-ca"
+    "-ca", "/run/user/1000/airplay-cover.jpg",
 ]
