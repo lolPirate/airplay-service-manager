@@ -1,0 +1,18 @@
+[Unit]
+Description=AirPlay Pi controller
+After=labwc.service
+Wants=labwc.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/deb/airplay-control
+Environment=HOME=/home/deb
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=ALSOFT_DRIVERS=alsa
+ExecStart=/home/deb/airplay-control/.venv/bin/gunicorn --workers 1 --threads 4 --bind 0.0.0.0:5000 run:app
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

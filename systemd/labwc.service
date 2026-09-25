@@ -1,0 +1,15 @@
+[Unit]
+Description=labwc Wayland compositor
+
+[Service]
+Type=simple
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=WLR_LIBINPUT_NO_DEVICES=1
+Environment=XCURSOR_SIZE=1
+ExecStart=/usr/bin/dbus-run-session /usr/bin/labwc
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
