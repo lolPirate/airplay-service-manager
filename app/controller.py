@@ -36,6 +36,28 @@ class UxPlayController:
     def __init__(self) -> None:
         self._lock = threading.RLock()
 
+    def restart_labwc(self) -> dict:
+        """Restart the existing systemd user service without launching a compositor."""
+        with self._lock:
+            try:
+                subprocess.run(
+                    ["/usr/bin/systemctl", "--user", "restart", "labwc.service"],
+                    env=config.BASE_ENV,
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                    check=True,
+                )
+            except subprocess.TimeoutExpired as exc:
+                raise RuntimeError(
+                    "labwc restart timed out; systemd may still be processing the restart"
+                ) from exc
+            except subprocess.CalledProcessError as exc:
+                raise RuntimeError(exc.stderr.strip() or "Failed to restart labwc.service") from exc
+            except OSError as exc:
+                raise RuntimeError(f"Cannot restart labwc.service: {exc}") from exc
+            return {"ok": True}
+
     @staticmethod
     def _display_command(*args: str) -> str:
         if not config.WAYLAND_SOCKET.is_socket():

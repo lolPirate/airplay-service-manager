@@ -192,6 +192,22 @@ refreshDisplay();
 startButton.addEventListener("click", start);
 stopButton.addEventListener("click", stop);
 
+$("restartLabwcButton").addEventListener("click", async () => {
+  if (state.busy) return;
+  setBusy(true);
+  setMessage("Restarting labwc…");
+  try {
+    await api("/api/labwc/restart", { method: "POST" });
+    setMessage("labwc service restarted. The display may take a moment to become ready.");
+  } catch (error) {
+    setMessage(error.message, true);
+  } finally {
+    setBusy(false);
+    await refresh();
+    await refreshDisplay();
+  }
+});
+
 refresh();
 setInterval(refresh, 5000);
 

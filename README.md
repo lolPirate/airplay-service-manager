@@ -117,6 +117,15 @@ A true Apple **App Clip** is a native iOS feature and requires an iOS/App Store 
 
 ## API
 
+### Restart labwc
+
+Use **Restart labwc** in the UI or `POST /api/labwc/restart` to run
+`systemctl --user restart labwc.service`. This restarts the existing user service
+installed by this project. It does not launch a separate compositor or restart
+UxPlay. AirPlay may disconnect; start the receiver again if needed. A successful
+response means the systemd restart completed; the display may still be initializing.
+Service errors return 503. Run the controller as the user who owns the labwc service.
+
 ### Display orientation
 
 `GET /api/display` returns the selected output, mode, and transform.

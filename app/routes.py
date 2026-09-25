@@ -19,6 +19,14 @@ def healthz():
     return jsonify(ok=True)
 
 
+@bp.post("/api/labwc/restart")
+def restart_labwc():
+    try:
+        return jsonify(controller().restart_labwc())
+    except RuntimeError as exc:
+        return jsonify(ok=False, error=str(exc)), 503
+
+
 @bp.get("/api/session")
 def session_status():
     return jsonify(controller().status())
