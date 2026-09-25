@@ -1,4 +1,4 @@
-const CACHE = "airplay-pi-v1";
+const CACHE = "airplay-pi-v2";
 const SHELL = [
   "/",
   "/static/css/app.css",

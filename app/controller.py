@@ -36,6 +36,72 @@ class UxPlayController:
     def __init__(self) -> None:
         self._lock = threading.RLock()
 
+    @staticmethod
+    def _display_command(*args: str) -> str:
+        if not config.WAYLAND_SOCKET.is_socket():
+            raise RuntimeError("labwc is not ready; Wayland socket is unavailable")
+        try:
+            result = subprocess.run(
+                [config.WLR_RANDR_BIN, *args], env=config.BASE_ENV,
+                capture_output=True, text=True, timeout=5, check=True,
+            )
+        except FileNotFoundError as exc:
+            raise RuntimeError("Install wlr-randr to control display orientation") from exc
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError("Display configuration timed out") from exc
+        except subprocess.CalledProcessError as exc:
+            raise RuntimeError(exc.stderr.strip() or "Display configuration failed") from exc
+        except OSError as exc:
+            raise RuntimeError(f"Cannot run wlr-randr: {exc}") from exc
+        return result.stdout
+
+    def _display_status_locked(self) -> dict:
+        # Parse the longstanding text format, including older Pi OS versions
+        # of wlr-randr which do not support --json.
+        outputs = []
+        current = None
+        for line in self._display_command().splitlines():
+            if line and not line[0].isspace():
+                current = {"output": line.split()[0], "enabled": False, "transform": None}
+                outputs.append(current)
+            elif current is not None:
+                key, _, value = line.strip().partition(":")
+                if key == "Enabled":
+                    current["enabled"] = value.strip() == "yes"
+                elif key == "Transform":
+                    current["transform"] = value.strip()
+
+        candidates = [output for output in outputs if output["enabled"] and
+                      (not config.DISPLAY_OUTPUT or output["output"] == config.DISPLAY_OUTPUT)]
+        if len(candidates) != 1:
+            raise RuntimeError(
+                "No enabled display found" if not candidates else
+                "Multiple displays are enabled; set DISPLAY_OUTPUT in the controller service"
+            )
+        output = candidates[0]
+        mode = next((name for name, transform in config.DISPLAY_MODES.items()
+                     if transform == output["transform"]), None)
+        return {"output": output["output"], "mode": mode, "transform": output["transform"]}
+
+    def display_status(self) -> dict:
+        with self._lock:
+            return self._display_status_locked()
+
+    def set_display_mode(self, mode: str) -> dict:
+        if not isinstance(mode, str) or mode not in config.DISPLAY_MODES:
+            raise ValueError("mode must be one of: " + ", ".join(config.DISPLAY_MODES))
+        with self._lock:
+            current = self._display_status_locked()
+            changed = current["mode"] != mode
+            if changed:
+                self._display_command(
+                    "--output", current["output"], "--transform", config.DISPLAY_MODES[mode]
+                )
+                current = self._display_status_locked()
+                if current["mode"] != mode:
+                    raise RuntimeError("Display did not apply the requested orientation")
+            return {"ok": True, "changed": changed, **current}
+
     def _read_state(self) -> dict | None:
         try:
             return json.loads(config.PROCESS_STATE.read_text())

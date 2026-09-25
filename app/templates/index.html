@@ -32,6 +32,18 @@
       <p id="profileHint" class="hint">Low-latency screen mirroring with HDMI audio.</p>
     </section>
 
+    <section class="card">
+      <h2>Display orientation</h2>
+      <div class="segmented" role="group" aria-label="Display orientation">
+        <button class="segment" data-mode="landscape" type="button" aria-pressed="false">Landscape</button>
+        <button class="segment" data-mode="portrait-right" type="button" aria-pressed="false">Portrait (90°)</button>
+        <button class="segment" data-mode="landscape-flipped" type="button" aria-pressed="false">Landscape (180°)</button>
+        <button class="segment" data-mode="portrait-left" type="button" aria-pressed="false">Portrait (270°)</button>
+      </div>
+      <p class="hint">Rotates the Pi display immediately, even when the receiver is stopped.</p>
+      <p id="displayState" class="hint" aria-live="polite">Checking display…</p>
+    </section>
+
     <section id="flipCard" class="card">
       <h2>Video flip</h2>
       <div class="toggle-row">

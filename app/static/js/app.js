@@ -40,7 +40,7 @@ function render() {
   startButton.textContent = state.running ? "Apply & restart" : "Start receiver";
   stopButton.disabled = state.busy || !state.running;
 
-  document.querySelectorAll(".segment").forEach((button) => {
+  document.querySelectorAll("[data-profile]").forEach((button) => {
     button.classList.toggle("active", button.dataset.profile === state.profile);
   });
 
@@ -68,6 +68,7 @@ async function api(url, options = {}) {
 }
 
 async function refresh() {
+  if (state.busy) return;
   try {
     const data = await api("/api/session");
     state.running = data.running;
@@ -131,7 +132,7 @@ async function applyIfRunning() {
   if (state.running) await start();
 }
 
-document.querySelectorAll(".segment").forEach((button) => {
+document.querySelectorAll("[data-profile]").forEach((button) => {
   button.addEventListener("click", async () => {
     state.profile = button.dataset.profile;
     await applyIfRunning();
@@ -148,6 +149,46 @@ flipV.addEventListener("click", async () => {
   await applyIfRunning();
 });
 
+async function refreshDisplay() {
+  try {
+    const data = await api("/api/display");
+    document.querySelectorAll("[data-mode]").forEach((button) => {
+      const selected = button.dataset.mode === data.mode;
+      button.classList.toggle("active", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+    $("displayState").textContent = `${data.output} · ${data.mode || data.transform}`;
+  } catch (error) {
+    $("displayState").textContent = error.message;
+    document.querySelectorAll("[data-mode]").forEach((button) => {
+      button.classList.remove("active");
+      button.setAttribute("aria-pressed", "false");
+    });
+  }
+}
+
+document.querySelectorAll("[data-mode]").forEach((button) => {
+  button.addEventListener("click", async () => {
+    if (state.busy) return;
+    setBusy(true);
+    setMessage("Rotating display…");
+    try {
+      await api("/api/display", {
+        method: "PUT",
+        body: JSON.stringify({ mode: button.dataset.mode }),
+      });
+      setMessage("Display orientation applied");
+    } catch (error) {
+      setMessage(error.message, true);
+    } finally {
+      await refreshDisplay();
+      setBusy(false);
+      render();
+    }
+  });
+});
+
+refreshDisplay();
 startButton.addEventListener("click", start);
 stopButton.addEventListener("click", stop);
 

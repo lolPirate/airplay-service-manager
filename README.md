@@ -48,6 +48,7 @@ cd /home/deb/airplay-control
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
+sudo apt install wlr-randr
 ```
 
 Disable the old always-on UxPlay service if it exists:
@@ -88,6 +89,26 @@ The app assumes:
 
 If your UxPlay binary is elsewhere, set `UXPLAY_BIN` in the controller service environment or change `app/config.py`.
 
+## Display orientation
+
+Use the **Display orientation** buttons to select landscape, portrait (90° or
+270°), or upside-down landscape. This rotates the entire Pi display immediately
+through labwc, without restarting UxPlay, and also works while the receiver is
+stopped. Video flips remain separate controls.
+
+The controller automatically selects the only enabled display. For multiple
+displays, add `Environment=DISPLAY_OUTPUT=HDMI-A-1` to the controller service,
+using the output name reported by `wlr-randr` in the Pi's Wayland session.
+`WLR_RANDR_BIN` overrides the default `/usr/bin/wlr-randr` path. After changing
+the service, run `systemctl --user daemon-reload` and
+`systemctl --user restart airplay-control.service`.
+
+Rotation lasts for the current labwc session; it is not saved across compositor
+restarts or reboots. It changes the display layout, not the orientation selected
+by the mirroring device or its app.
+
+The implementation uses the [wlr-randr output transform options](https://github.com/emersion/wlr-randr/blob/master/main.c).
+
 ## iPhone Home Screen
 
 The UI is a small installable web app with a manifest, service worker and Apple mobile-web-app metadata. In Safari use **Share → Add to Home Screen**. It launches in standalone mode.
@@ -95,6 +116,22 @@ The UI is a small installable web app with a manifest, service worker and Apple 
 A true Apple **App Clip** is a native iOS feature and requires an iOS/App Store project plus associated-domain setup; this Flask UI is instead a PWA/Home Screen app.
 
 ## API
+
+### Display orientation
+
+`GET /api/display` returns the selected output, mode, and transform.
+To rotate it, send:
+
+```http
+PUT /api/display
+Content-Type: application/json
+
+{"mode": "portrait-right"}
+```
+
+Modes: `landscape`, `portrait-right`, `portrait-left`, `landscape-flipped`.
+Repeating the current mode is a no-op. Invalid modes return 400; unavailable
+displays or a missing/failed `wlr-randr` return 503.
 
 ### Status
 
